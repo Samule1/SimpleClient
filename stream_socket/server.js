@@ -4,7 +4,7 @@ const ioClient = require('socket.io-client');
 const fs = require('fs');
 
 
-var socket = ioClient.connect("http://localhost:3000");
+var socket = ioClient.connect("http://localhost:3000/");
 
 let accX = fs.readFileSync('accX.txt').toString().split('\n').map(Number);
 let accY = fs.readFileSync('accY.txt').toString().split('\n').map(Number);
@@ -12,9 +12,13 @@ let accZ = fs.readFileSync('accZ.txt').toString().split('\n').map(Number);
 
 socket.emit('register', {user:'Marcus', type:'publisher', freq:'128.00'});
 
+
 socket.on('registered', (data)=>{
   console.log(data.id);
-  sendAllData(accX,accY,accZ);
+  setTimeout(function(){
+      sendAllData(accX,accY,accZ);
+  },10000)
+
 });
 
 function sendAllData(x,y,z){
@@ -23,7 +27,7 @@ function sendAllData(x,y,z){
   let loop =setInterval(function(){
     socket.emit('accelormeter_input', {x: x[i], y:y[i], z:z[i], client_ts: Date.now(), index: i});
     i++;
-    if(i === 6000){
+    if(i === 6500){
       clearInterval(loop);
     }
   },8);
