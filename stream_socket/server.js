@@ -6,32 +6,38 @@ const fs = require('fs');
 
 var socket = ioClient.connect("http://localhost:3000/");
 
-let user1_accX = fs.readFileSync('User1_accX.txt').toString().split('\n').map(Number);
-let user1_accY = fs.readFileSync('User1_accY.txt').toString().split('\n').map(Number);
-let user1_accZ = fs.readFileSync('User1_accZ.txt').toString().split('\n').map(Number);
+var rf = {
+  x: fs.readFileSync('rf_accX.txt').toString().split('\n').map(Number),
+  y: fs.readFileSync('rf_accY.txt').toString().split('\n').map(Number),
+  z: fs.readFileSync('rf_accZ.txt').toString().split('\n').map(Number)
+}
 
-let user2_accX = fs.readFileSync('User2_accX.txt').toString().split('\n').map(Number);
-let user2_accY = fs.readFileSync('User2_accY.txt').toString().split('\n').map(Number);
-let user2_accZ = fs.readFileSync('User2_accZ.txt').toString().split('\n').map(Number);
-
+var lf = {
+  x: fs.readFileSync('lf_accX.txt').toString().split('\n').map(Number),
+  y: fs.readFileSync('lf_accY.txt').toString().split('\n').map(Number),
+  z: fs.readFileSync('lf_accZ.txt').toString().split('\n').map(Number)
+}
 
 socket.emit('register', {user:'Marcus', type:'publisher', freq:'128.00', channel:0});
-socket.emit('register', {user:'Marcus', type:'publisher', freq:'128.00', channel:1});
+
+setTimeout(function(){
+  socket.emit('register', {user:'Marcus', type:'publisher', freq:'128.00', channel:1});
+}, 1000);
 
 
 socket.on('registered', (data)=>{
   console.log(data.id);
   setTimeout(function(){
-      sendAllData(user1_accX,user1_accY,user1_accZ,0);
-      sendAllData(user2_accX,user2_accY,user2_accZ,1);
+      sendAllData(rf, lf);
   },10000);
 });
 
-function sendAllData(x,y,z,channel){
+function sendAllData(rf, lf){
   console.log('sending all the data..')
   var i = 0;
   let loop =setInterval(function(){
-    socket.emit('accelormeter_input', {x: x[i], y:y[i], z:z[i], client_ts: Date.now(), index: i, channel:channel});
+    socket.emit('accelormeter_input', {x: rf.x[i], y:rf.y[i], z:rf.z[i], client_ts: Date.now(), index: i, channel:0});
+    socket.emit('accelormeter_input', {x: lf.x[i], y:lf.y[i], z:lf.z[i], client_ts: Date.now(), index: i, channel:1});
     i++;
     if(i === 30000){
       clearInterval(loop);
