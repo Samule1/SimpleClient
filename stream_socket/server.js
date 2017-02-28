@@ -18,11 +18,11 @@ var lf = {
   z: fs.readFileSync('lf_accZ.txt').toString().split('\n').map(Number)
 }
 
-socket.emit('register', {user:'Marcus', type:'publisher', freq:'128.00', channel:0});
+socket.emit('register', {user:'Marcus', type:'publisher', freq:'128.00', channel:1});
 
 
 setTimeout(function(){
-  socket.emit('register', {user:'Hampus', type:'publisher', freq:'128.00', channel:1});
+  socket.emit('register', {user:'Hampus', type:'publisher', freq:'128.00', channel:2});
 }, 1000);
 
 
@@ -34,11 +34,11 @@ setTimeout(function(){
 
 socket.on('registered', (data)=>{
   console.log(data.id);
-  if(data.channel === 0){
-      sendAllData(rf, 0);
-  }
   if(data.channel === 1){
-      sendAllData(lf, 1);
+      sendAllData(rf, 1);
+  }
+  if(data.channel === 2){
+      sendAllData(lf, 2);
   }
 
 
