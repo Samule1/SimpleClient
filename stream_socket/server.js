@@ -2,58 +2,52 @@
 const io = require('socket.io');
 const ioClient = require('socket.io-client');
 const fs = require('fs');
+const Sensor = require('./sensor.js').Sensor; 
+const connection_server = "http://104.155.61.178";
+const connection_local = "http://localhost:3000";
 
+let finished_streams = 0; 
+let registered_sensors = 0; 
 
-var socket = ioClient.connect("http://localhost:3000");
+let number_of_clients = process.argv[2];
+let time_between_connect = process.argv[3]; 
+let number_of_packets = process.argv[4]
 
-var rf = {
-  x: fs.readFileSync('rf_accX.txt').toString().split('\n').map(Number),
-  y: fs.readFileSync('rf_accY.txt').toString().split('\n').map(Number),
-  z: fs.readFileSync('rf_accZ.txt').toString().split('\n').map(Number)
+let sensors = []; 
+let sockets = [];
+
+for(let i = 0; i < number_of_clients; i++){
+  let socket = ioClient.connect(connection_local);
+  sockets.push(socket);
 }
 
-var lf = {
-  x: fs.readFileSync('lf_accX.txt').toString().split('\n').map(Number),
-  y: fs.readFileSync('lf_accY.txt').toString().split('\n').map(Number),
-  z: fs.readFileSync('lf_accZ.txt').toString().split('\n').map(Number)
-}
-
-socket.emit('register', {user:'Marcus', type:'publisher', freq:'128.00', channel:0});
-
-
-setTimeout(function(){
-  socket.emit('register', {user:'Hampus', type:'publisher', freq:'128.00', channel:1});
-}, 1000);
-
-
-
-
-
-
-
-
-socket.on('registered', (data)=>{
-  console.log(data.id);
-  if(data.channel === 0){
-      sendAllData(rf, 0);
-  }
-  if(data.channel === 1){
-      sendAllData(lf, 1);
-  }
-
-
+sockets.forEach((socket) => {
+  let s1 = new Sensor("Hampus", number_of_packets, 1, socket, sensor_done);
+  let s2 = new Sensor("Hampus", number_of_packets, 2, socket, sensor_done);
+  sensors.push(s1);
+  sensors.push(s2);
 });
 
-function sendAllData(points, channel){
-  console.log('sending all the data..')
-  var i = 0;
-  let loop =setInterval(function(){
-    socket.emit('accelormeter_input', {x: points.x[i], y:points.y[i], z:points.z[i], client_ts: Date.now(), index: i, channel:channel});
+sensors.forEach((sensor) => {sensor.register()})
 
-    i++;
-    if(i === 30000){
-      clearInterval(loop);
-    }
-  },8);
-  console.log('Done');
+
+sockets.forEach((socket) => {
+  socket.on('registered', (data) =>{handle_reg(data)})
+})
+
+function handle_reg(data){
+  registered_sensors++; 
+  console.log(registered_sensors)
+  if(registered_sensors == (2*number_of_clients)){
+    console.log("STREAMING")
+    sensors.forEach((s) => {s.stream()})
+  }
+}
+
+function sensor_done(){
+  finished_streams++; 
+  if(finished_streams ===( 2 * number_of_clients)){
+    console.log("done.")
+   // process.exit(); 
+  }
 }
