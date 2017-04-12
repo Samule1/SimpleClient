@@ -31,7 +31,7 @@ module.exports = {
             let t = this;
             let loop = setInterval(function () {
                 //console.log(t.stream_length)
-                socket.emit('accelormeter_input', { x: t.data.x[i], y: t.data.y[i], z: t.data.z[i], client_ts: Date.now(), index: i, channel: t.channel });
+                socket.emit('accelormeter_input', {d:[{ x: t.data.x[i], y: t.data.y[i], z: t.data.z[i], client_ts: Date.now(), index: i, channel: t.channel}]});
                 i++;
                 if (i >= t.stream_length) {
                     console.log("BREAKING THE LOOP")
